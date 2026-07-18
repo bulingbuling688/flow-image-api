@@ -12,6 +12,7 @@ Set-Location $projectRoot
 
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
+$PSDefaultParameterValues["Out-File:Encoding"] = "utf8"
 
 & $Python -m flow_image_api.worker --env $EnvFile *>> $LogFile
 exit $LASTEXITCODE

@@ -13,13 +13,17 @@ def main() -> int:
     parser.add_argument("prompt")
     parser.add_argument("--base-url", default=os.environ.get("FLOW_API_BASE_URL"))
     parser.add_argument("--api-key", default=os.environ.get("FLOW_API_KEY"))
+    parser.add_argument("--api-key-file", type=Path)
     parser.add_argument("--out", type=Path, default=Path("flow-image-api-result.jpg"))
     parser.add_argument("--timeout", type=int, default=900)
     args = parser.parse_args()
-    if not args.base_url or not args.api_key:
-        parser.error("Set FLOW_API_BASE_URL and FLOW_API_KEY or pass both options")
+    api_key = args.api_key
+    if args.api_key_file:
+        api_key = args.api_key_file.read_text(encoding="utf-8-sig").strip()
+    if not args.base_url or not api_key:
+        parser.error("Set the base URL and provide an API key or --api-key-file")
 
-    headers = {"Authorization": f"Bearer {args.api_key}"}
+    headers = {"Authorization": f"Bearer {api_key}"}
     with httpx.Client(base_url=args.base_url, headers=headers, timeout=60) as client:
         response = client.post(
             "/v1/images/generations",
