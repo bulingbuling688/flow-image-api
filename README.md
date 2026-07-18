@@ -2,7 +2,9 @@
 
 ## 在线地址
 
-正在部署，预定地址为 `https://flow-image-api.chatapi.fun`。
+- API：<https://flow-image-api.chatapi.fun>
+- 交互文档：<https://flow-image-api.chatapi.fun/docs>
+- 健康检查：<https://flow-image-api.chatapi.fun/health>
 
 ## 项目简介
 
@@ -104,11 +106,12 @@ curl -X POST https://flow-image-api.chatapi.fun/v1/images/generations \
 | `FLOW_GFLOW_PYTHON` | gflow 虚拟环境 Python | Worker 是 | `D:\workspace\github\ffroliva\gflow-cli\.venv\Scripts\python.exe` |
 | `FLOW_GFLOW_HOME` | gflow 登录配置目录 | Worker 是 | `D:\workspace\data\gflow-cli` |
 | `FLOW_PLAYWRIGHT_BROWSERS_PATH` | Playwright 浏览器目录 | Worker 是 | `D:\workspace\runtime\ms-playwright` |
+| `FLOW_GFLOW_TEMP_DIR` | gflow 临时目录 | Worker 是 | `D:\workspace\tmp\gflow` |
 | `FLOW_GFLOW_PROFILE` | 已验证的 gflow 配置名 | Worker 是 | `your-profile` |
 | `FLOW_WORKER_LOG_FILE` | Worker UTF-8 日志路径 | Worker 是 | `D:\workspace\state\flow-image-api\worker.log` |
 | `FLOW_HTTP_PROXY` | Worker 公网请求代理，留空时读取系统代理 | 否 | `http://127.0.0.1:7890` |
 
-真实 Token 仅保存在 VPS 环境文件和 D 盘私密配置中，不写入仓库。
+真实 Token 仅保存在 D 盘私密配置中，VPS 只保存 SHA-256；两者均不写入仓库。
 
 ## 部署信息
 
@@ -120,25 +123,28 @@ curl -X POST https://flow-image-api.chatapi.fun/v1/images/generations \
 | Git 分支 | `main` |
 | 包管理器 | `pip` |
 | 安装命令 | `python3 -m pip install -r requirements.txt` |
-| 上线代码提交 | 正在部署 |
-| 文档提交 | 正在部署 |
+| 上线代码提交 | `649228304732474d741f383f3bf73f50796ecef7` |
+| 文档提交 | GitHub `main` 中本 README 所在提交 |
 | VPS 项目目录 | `/opt/apps/flow-image-api` |
-| 源码目录 | 不适用（本地归档发布） |
+| 源码目录 | `/opt/apps/flow-image-api/source` |
 | 版本目录 | `/opt/apps/flow-image-api/releases` |
-| 当前版本 | 正在部署 |
-| 上一版本 | 不适用 |
+| 当前版本 | `/opt/apps/flow-image-api/releases/649228304732474d741f383f3bf73f50796ecef7` |
+| 上一版本 | `/opt/apps/flow-image-api/releases/04b1b4d613cd106d9f9452c20938a12100eb7e9d` |
 | 静态入口 | 不适用 |
 | 运行方式 | systemd |
-| 构建命令 | 不适用 |
+| 发布配置 | `compatibility` |
+| 发布传输 | `github-clone` |
+| 构件模式 | `source` |
+| 构建命令 | `python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt` |
 | 启动命令 | `.venv/bin/uvicorn flow_image_api.asgi:app --host 127.0.0.1 --port 18446` |
 | 内部端口 | `127.0.0.1:18446` |
 | 在线域名 | `https://flow-image-api.chatapi.fun` |
 | Nginx 配置 | `/etc/nginx/sites-available/flow-image-api.conf` |
-| Cloudflare DNS | 正在部署 |
-| HTTPS | 正在部署 |
+| Cloudflare DNS | 已验证代理 A 记录 |
+| HTTPS | Let’s Encrypt，Certbot 自动续期 |
 | 环境文件 | `/etc/flow-image-api.env` |
 | 更新方式 | 重新运行 `github-vps-domain-publish` |
-| 回滚方式 | 首次发布后补充 |
+| 回滚方式 | 原子切换 `current` 到上一版本并重启 `flow-image-api` |
 
 ## 目录结构
 
@@ -161,11 +167,11 @@ readlink -f /opt/apps/flow-image-api/current
 journalctl -u flow-image-api -n 80 --no-pager
 ```
 
-Windows Worker 日志默认位于 `D:\workspace\state\flow-image-api\worker.log`。
+Windows Worker 由计划任务 `FlowImageApiWorker` 管理，日志默认位于 `D:\workspace\state\flow-image-api\worker.log`。
 
 ## 维护记录
 
-- 2026-07-18：实现首版 API、持久任务队列、Windows gflow Worker 和部署配置，正在发布。
+- 2026-07-18：首版上线；完成 10 项测试、HTTPS 健康检查、Bearer 鉴权和公网生图验收。验收任务生成并下载了一张 1376x768 JPEG。
 
 ## 开源许可与第三方说明
 
