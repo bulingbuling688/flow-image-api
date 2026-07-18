@@ -105,6 +105,7 @@ curl -X POST https://flow-image-api.chatapi.fun/v1/images/generations \
 | `FLOW_GFLOW_HOME` | gflow 登录配置目录 | Worker 是 | `D:\workspace\data\gflow-cli` |
 | `FLOW_PLAYWRIGHT_BROWSERS_PATH` | Playwright 浏览器目录 | Worker 是 | `D:\workspace\runtime\ms-playwright` |
 | `FLOW_GFLOW_PROFILE` | 已验证的 gflow 配置名 | Worker 是 | `your-profile` |
+| `FLOW_WORKER_LOG_FILE` | Worker UTF-8 日志路径 | Worker 是 | `D:\workspace\state\flow-image-api\worker.log` |
 | `FLOW_HTTP_PROXY` | Worker 公网请求代理，留空时读取系统代理 | 否 | `http://127.0.0.1:7890` |
 
 真实 Token 仅保存在 VPS 环境文件和 D 盘私密配置中，不写入仓库。

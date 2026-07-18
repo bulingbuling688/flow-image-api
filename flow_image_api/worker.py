@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,7 @@ class WorkerSettings:
     gflow_temp_dir: Path
     gflow_profile: str
     output_dir: Path
+    log_file: Path | None = None
     http_proxy: str | None = None
     poll_seconds: float = 3.0
     generation_timeout_seconds: int = 900
@@ -76,6 +78,9 @@ class WorkerSettings:
             gflow_temp_dir=Path(_required(values, "FLOW_GFLOW_TEMP_DIR")),
             gflow_profile=_required(values, "FLOW_GFLOW_PROFILE"),
             output_dir=Path(_required(values, "FLOW_GFLOW_OUTPUT_DIR")),
+            log_file=(
+                Path(values["FLOW_WORKER_LOG_FILE"]) if values.get("FLOW_WORKER_LOG_FILE") else None
+            ),
             http_proxy=values.get("FLOW_HTTP_PROXY") or _system_proxy(),
             poll_seconds=float(values.get("FLOW_WORKER_POLL_SECONDS", "3")),
             generation_timeout_seconds=int(values.get("FLOW_GENERATION_TIMEOUT_SECONDS", "900")),
@@ -272,6 +277,21 @@ class FlowWorker:
                 time.sleep(max(self.settings.poll_seconds, 5))
 
 
+def _run_worker(settings: WorkerSettings, *, once: bool) -> int:
+    worker = FlowWorker(settings)
+    try:
+        if once:
+            worker.heartbeat()
+            worker.run_once()
+        else:
+            worker.run_forever()
+    except KeyboardInterrupt:
+        return 130
+    finally:
+        worker.close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Poll and execute Flow image jobs")
     parser.add_argument(
@@ -282,18 +302,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--once", action="store_true", help="Process at most one job")
     arguments = parser.parse_args(argv)
-    worker = FlowWorker(WorkerSettings.from_file(arguments.env))
-    try:
-        if arguments.once:
-            worker.heartbeat()
-            worker.run_once()
-        else:
-            worker.run_forever()
-    except KeyboardInterrupt:
-        return 130
-    finally:
-        worker.close()
-    return 0
+    settings = WorkerSettings.from_file(arguments.env)
+    if settings.log_file is None:
+        return _run_worker(settings, once=arguments.once)
+    settings.log_file.parent.mkdir(parents=True, exist_ok=True)
+    with settings.log_file.open("a", encoding="utf-8", buffering=1) as log_file:
+        with redirect_stdout(log_file), redirect_stderr(log_file):
+            return _run_worker(settings, once=arguments.once)
 
 
 if __name__ == "__main__":
