@@ -1,0 +1,22 @@
+[Unit]
+Description=Flow Image API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/apps/flow-image-api/current
+EnvironmentFile=/etc/flow-image-api.env
+ExecStart=/opt/apps/flow-image-api/current/.venv/bin/uvicorn flow_image_api.asgi:app --host 127.0.0.1 --port 18446 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/apps/flow-image-api/shared
+
+[Install]
+WantedBy=multi-user.target
