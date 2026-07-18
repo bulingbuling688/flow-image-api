@@ -101,7 +101,9 @@ curl -X POST https://flow-image-api.chatapi.fun/v1/images/generations \
 | `FLOW_PUBLIC_BASE_URL` | 公网基础地址 | 是 | `https://flow-image-api.chatapi.fun` |
 | `FLOW_API_BASE_URL` | Worker 请求的 API 地址 | Worker 是 | `https://flow-image-api.chatapi.fun` |
 | `FLOW_WORKER_TOKEN` | Worker 私密 Token | Worker 是 | `replace-with-private-token` |
-| `FLOW_GFLOW_RUNNER_PS1` | D 盘 gflow 启动器 | Worker 是 | `D:\workspace\bin\gflow-run.ps1` |
+| `FLOW_GFLOW_PYTHON` | gflow 虚拟环境 Python | Worker 是 | `D:\workspace\github\ffroliva\gflow-cli\.venv\Scripts\python.exe` |
+| `FLOW_GFLOW_HOME` | gflow 登录配置目录 | Worker 是 | `D:\workspace\data\gflow-cli` |
+| `FLOW_PLAYWRIGHT_BROWSERS_PATH` | Playwright 浏览器目录 | Worker 是 | `D:\workspace\runtime\ms-playwright` |
 | `FLOW_GFLOW_PROFILE` | 已验证的 gflow 配置名 | Worker 是 | `your-profile` |
 | `FLOW_HTTP_PROXY` | Worker 公网请求代理，留空时读取系统代理 | 否 | `http://127.0.0.1:7890` |
 

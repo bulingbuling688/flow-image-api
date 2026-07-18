@@ -17,10 +17,14 @@ class WorkerGenerationTestCase(unittest.TestCase):
             api_base_url="https://example.test",
             worker_token="worker-token",
             worker_id="worker-a",
-            gflow_runner_ps1=self.root / "gflow-run.ps1",
+            gflow_python=self.root / "gflow-python.exe",
+            gflow_home=self.root / "gflow-home",
+            playwright_browsers_path=self.root / "browsers",
+            gflow_temp_dir=self.root / "temp",
             gflow_profile="profile-a",
             output_dir=self.root / "outputs",
         )
+        self.settings.gflow_python.write_bytes(b"test")
         self.worker = FlowWorker(self.settings)
 
     def tearDown(self) -> None:
@@ -80,8 +84,10 @@ class WorkerGenerationTestCase(unittest.TestCase):
 
         command = run_mock.call_args.args[0]
         self.assertNotIn("private prompt", command)
-        self.assertNotIn("--json", command)
         self.assertEqual(run_mock.call_args.kwargs["input"], "private prompt\n")
+        process_env = run_mock.call_args.kwargs["env"]
+        self.assertEqual(process_env["GFLOW_CLI_HOME"], str(self.settings.gflow_home))
+        self.assertEqual(process_env["GFLOW_CLI_HEADLESS"], "false")
 
 
 if __name__ == "__main__":

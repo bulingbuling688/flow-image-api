@@ -52,7 +52,10 @@ class WorkerSettings:
     api_base_url: str
     worker_token: str
     worker_id: str
-    gflow_runner_ps1: Path
+    gflow_python: Path
+    gflow_home: Path
+    playwright_browsers_path: Path
+    gflow_temp_dir: Path
     gflow_profile: str
     output_dir: Path
     http_proxy: str | None = None
@@ -67,7 +70,10 @@ class WorkerSettings:
             api_base_url=_required(values, "FLOW_API_BASE_URL").rstrip("/"),
             worker_token=_required(values, "FLOW_WORKER_TOKEN"),
             worker_id=values.get("FLOW_WORKER_ID", socket.gethostname()).strip(),
-            gflow_runner_ps1=Path(_required(values, "FLOW_GFLOW_RUNNER_PS1")),
+            gflow_python=Path(_required(values, "FLOW_GFLOW_PYTHON")),
+            gflow_home=Path(_required(values, "FLOW_GFLOW_HOME")),
+            playwright_browsers_path=Path(_required(values, "FLOW_PLAYWRIGHT_BROWSERS_PATH")),
+            gflow_temp_dir=Path(_required(values, "FLOW_GFLOW_TEMP_DIR")),
             gflow_profile=_required(values, "FLOW_GFLOW_PROFILE"),
             output_dir=Path(_required(values, "FLOW_GFLOW_OUTPUT_DIR")),
             http_proxy=values.get("FLOW_HTTP_PROXY") or _system_proxy(),
@@ -142,16 +148,13 @@ class FlowWorker:
                     return cached_path, cached_mime
             except (json.JSONDecodeError, KeyError, OSError, GenerationFailure):
                 marker.unlink(missing_ok=True)
+        bridge = Path(__file__).resolve().parents[1] / "scripts" / "gflow_bridge.py"
+        if not self.settings.gflow_python.is_file() or not bridge.is_file():
+            raise GenerationFailure("gflow_bridge_missing")
+        self.settings.gflow_temp_dir.mkdir(parents=True, exist_ok=True)
         command = [
-            "powershell.exe",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(self.settings.gflow_runner_ps1),
-            "image",
-            "t2i",
-            "--stdin",
+            str(self.settings.gflow_python),
+            str(bridge),
             "--model",
             str(job["model"]),
             "--aspect",
@@ -163,6 +166,22 @@ class FlowWorker:
             "--profile",
             self.settings.gflow_profile,
         ]
+        process_env = os.environ.copy()
+        process_env.update(
+            {
+                "PYTHONUTF8": "1",
+                "PYTHONIOENCODING": "utf-8",
+                "PLAYWRIGHT_BROWSERS_PATH": str(self.settings.playwright_browsers_path),
+                "GFLOW_CLI_HOME": str(self.settings.gflow_home),
+                "GFLOW_CLI_OUTPUT_DIR": str(self.settings.output_dir),
+                "GFLOW_CLI_HEADLESS": "false",
+                "TEMP": str(self.settings.gflow_temp_dir),
+                "TMP": str(self.settings.gflow_temp_dir),
+            }
+        )
+        if self.settings.http_proxy:
+            process_env["HTTPS_PROXY"] = self.settings.http_proxy
+            process_env["HTTP_PROXY"] = self.settings.http_proxy
         try:
             completed = subprocess.run(
                 command,
@@ -172,6 +191,7 @@ class FlowWorker:
                 errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                env=process_env,
                 timeout=self.settings.generation_timeout_seconds,
                 check=False,
             )
