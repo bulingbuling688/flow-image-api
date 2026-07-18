@@ -142,7 +142,7 @@ curl -X POST https://flow-image-api.chatapi.fun/v1/images/generations \
 flow_image_api/       FastAPI、SQLite 队列和 Windows Worker
 tests/                API 生命周期与安全测试
 scripts/              Worker 启动、自动运行与公网冒烟脚本
-deploy/               systemd 和 Nginx 配置模板
+deploy/               systemd、HTTP 引导和 HTTPS Nginx 配置模板
 .env.example          VPS 环境变量示例
 worker.env.example    Windows Worker 配置示例
 ```
