@@ -9,6 +9,7 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,16 @@ def _required(values: dict[str, str], name: str) -> str:
     return value
 
 
+def _system_proxy() -> str | None:
+    proxies = urllib.request.getproxies()
+    proxy = proxies.get("https") or proxies.get("http")
+    if not proxy:
+        return None
+    if "://" not in proxy:
+        return f"http://{proxy}"
+    return proxy
+
+
 @dataclass(frozen=True)
 class WorkerSettings:
     api_base_url: str
@@ -44,6 +55,7 @@ class WorkerSettings:
     gflow_runner_ps1: Path
     gflow_profile: str
     output_dir: Path
+    http_proxy: str | None = None
     poll_seconds: float = 3.0
     generation_timeout_seconds: int = 900
     keep_local_outputs: bool = True
@@ -58,6 +70,7 @@ class WorkerSettings:
             gflow_runner_ps1=Path(_required(values, "FLOW_GFLOW_RUNNER_PS1")),
             gflow_profile=_required(values, "FLOW_GFLOW_PROFILE"),
             output_dir=Path(_required(values, "FLOW_GFLOW_OUTPUT_DIR")),
+            http_proxy=values.get("FLOW_HTTP_PROXY") or _system_proxy(),
             poll_seconds=float(values.get("FLOW_WORKER_POLL_SECONDS", "3")),
             generation_timeout_seconds=int(values.get("FLOW_GENERATION_TIMEOUT_SECONDS", "900")),
             keep_local_outputs=values.get("FLOW_KEEP_LOCAL_OUTPUTS", "true").lower()
@@ -91,7 +104,8 @@ class FlowWorker:
             headers={"Authorization": f"Bearer {settings.worker_token}"},
             timeout=httpx.Timeout(30, connect=30),
             follow_redirects=False,
-            trust_env=True,
+            proxy=settings.http_proxy,
+            trust_env=settings.http_proxy is None,
         )
 
     def close(self) -> None:

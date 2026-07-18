@@ -103,6 +103,7 @@ curl -X POST https://flow-image-api.chatapi.fun/v1/images/generations \
 | `FLOW_WORKER_TOKEN` | Worker 私密 Token | Worker 是 | `replace-with-private-token` |
 | `FLOW_GFLOW_RUNNER_PS1` | D 盘 gflow 启动器 | Worker 是 | `D:\workspace\bin\gflow-run.ps1` |
 | `FLOW_GFLOW_PROFILE` | 已验证的 gflow 配置名 | Worker 是 | `your-profile` |
+| `FLOW_HTTP_PROXY` | Worker 公网请求代理，留空时读取系统代理 | 否 | `http://127.0.0.1:7890` |
 
 真实 Token 仅保存在 VPS 环境文件和 D 盘私密配置中，不写入仓库。
 
