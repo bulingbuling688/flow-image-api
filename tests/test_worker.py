@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import subprocess
 import tempfile
 import unittest
@@ -43,7 +42,7 @@ class WorkerGenerationTestCase(unittest.TestCase):
         run_mock.return_value = subprocess.CompletedProcess(
             args=[],
             returncode=0,
-            stdout=json.dumps({"images": [{"local_path": str(image_path)}]}),
+            stdout="batch complete",
             stderr="",
         )
 
@@ -73,7 +72,7 @@ class WorkerGenerationTestCase(unittest.TestCase):
         run_mock.return_value = subprocess.CompletedProcess(
             args=[],
             returncode=0,
-            stdout=json.dumps({"images": [{"local_path": str(image_path)}]}),
+            stdout="batch complete",
             stderr="",
         )
 
@@ -81,6 +80,7 @@ class WorkerGenerationTestCase(unittest.TestCase):
 
         command = run_mock.call_args.args[0]
         self.assertNotIn("private prompt", command)
+        self.assertNotIn("--json", command)
         self.assertEqual(run_mock.call_args.kwargs["input"], "private prompt\n")
 
 

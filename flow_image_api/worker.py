@@ -162,7 +162,6 @@ class FlowWorker:
             str(job_dir),
             "--profile",
             self.settings.gflow_profile,
-            "--json",
         ]
         try:
             completed = subprocess.run(
@@ -180,13 +179,18 @@ class FlowWorker:
             raise GenerationFailure("gflow_timeout") from exc
         if completed.returncode != 0:
             raise GenerationFailure(f"gflow_exit_{completed.returncode}")
-        try:
-            result = json.loads(completed.stdout.lstrip("\ufeff"))
-            image_path = Path(result["images"][0]["local_path"])
-        except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-            raise GenerationFailure("gflow_invalid_output") from exc
-        if not image_path.is_file():
+        candidates = sorted(
+            (
+                path
+                for path in job_dir.iterdir()
+                if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+            ),
+            key=lambda path: path.stat().st_mtime_ns,
+            reverse=True,
+        )
+        if not candidates:
             raise GenerationFailure("gflow_output_missing")
+        image_path = candidates[0]
         if image_path.parent.resolve() != job_dir.resolve():
             local_image = job_dir / image_path.name
             shutil.copy2(image_path, local_image)
