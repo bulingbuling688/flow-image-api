@@ -159,8 +159,6 @@ class FlowWorker:
             str(job["model"]),
             "--aspect",
             str(job["aspect_ratio"]),
-            "-n",
-            "1",
             "--out",
             str(job_dir),
             "--profile",
